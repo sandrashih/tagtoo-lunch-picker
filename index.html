@@ -550,7 +550,7 @@ function App(){
         <div className="header-actions">
           <button className="btn-add" onClick={()=>setShowAdd(true)}>
             <span className="add-text">+ {t.add}</span>
-            <span className="add-icon">+</span>
+            <span className="add-icon">+ {lang==='zh'?'新增':'Add'}</span>
           </button>
           <button className="lang-toggle" onClick={()=>setLang(l=>l==='zh'?'en':'zh')}>{lang==='zh'?'EN':'中文'}</button>
         </div>
