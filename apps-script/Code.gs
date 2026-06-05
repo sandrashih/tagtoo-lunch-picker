@@ -10,9 +10,15 @@ function corsResponse(data) {
     .setMimeType(ContentService.MimeType.JSON)
 }
 
-// ===== GET：列出所有餐廳 =====
+// ===== GET：列出所有餐廳 / 解析 URL =====
 function doGet(e) {
   try {
+    const action = e && e.parameter && e.parameter.action
+    if (action === 'parse') {
+      const url = e.parameter.url || ''
+      const parsed = parseGoogleMapsUrl(url)
+      return corsResponse(parsed || { error: 'cannot parse' })
+    }
     return corsResponse(listRestaurants())
   } catch(err) {
     return corsResponse({ error: err.message })

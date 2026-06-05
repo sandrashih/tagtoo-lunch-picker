@@ -290,17 +290,30 @@ function AddModal({ t, lang, onClose, onAdded }){
     },100)
   },[step])
 
-  function goStep2(){
+  async function goStep2(){
     const v=url.trim()
-    if(!v.includes('google')&&!v.includes('maps')&&!v.includes('goo.gl')){ setSt('invalid'); return }
-    const parsed=parseMapUrl(v)
-    if(parsed.name){ setName(parsed.name); setCategory(detectCategory(parsed.name)) }
-    if(parsed.lat){
-      setCenter([parsed.lat, parsed.lng])
-      setPin({lat:parsed.lat, lng:parsed.lng})
+    if(!v.includes('google')&&!v.includes('maps')&&!v.includes('goo.gl')&&!v.includes('maps.app')){ setSt('invalid'); return }
+
+    // 先嘗試前端解析（一般長網址）
+    const local=parseMapUrl(v)
+
+    // 若有名稱和座標，直接用
+    if(local.lat && local.name){
+      setName(local.name); setCategory(detectCategory(local.name))
+      setCenter([local.lat, local.lng]); setPin({lat:local.lat, lng:local.lng})
+      setSt('idle'); setStep(2); return
     }
-    setSt('idle')
-    setStep(2)
+
+    // 否則呼叫後端解析（短網址 / 缺座標）
+    setSt('parsing')
+    try{
+      const r=await fetch(`${API_URL}?action=parse&url=${encodeURIComponent(v)}`)
+      const d=await r.json()
+      if(d.name) setName(d.name)
+      if(d.name) setCategory(detectCategory(d.name))
+      if(d.lat){ setCenter([d.lat, d.lng]); setPin({lat:d.lat, lng:d.lng}) }
+    }catch{ /* 解析失敗就讓使用者手動點 */ }
+    setSt('idle'); setStep(2)
   }
 
   async function submit(){
