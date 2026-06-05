@@ -112,29 +112,39 @@ function parseGoogleMapsUrl(url) {
     if (atMatch) { lat = parseFloat(atMatch[1]); lng = parseFloat(atMatch[2]) }
   }
 
-  // 短網址展開（maps.app.goo.gl 返回 HTML，需從內容抓真實 URL）
+  // 短網址展開（maps.app.goo.gl）
   if (!lat && (url.includes('goo.gl') || url.includes('maps.app'))) {
     try {
-      const resp = UrlFetchApp.fetch(url, { followRedirects: true, muteHttpExceptions: true })
-      const finalUrl = resp.getUrl()
-      const html = resp.getContentText()
+      // 方法一：讀 Location header（不跟隨 redirect）
+      const r1 = UrlFetchApp.fetch(url, { followRedirects: false, muteHttpExceptions: true })
+      const headers = r1.getHeaders()
+      const location = headers['Location'] || headers['location']
+      if (location) {
+        const r = parseGoogleMapsUrl(location)
+        if (r) return r
+      }
 
-      // 先試最終 URL
+      // 方法二：跟隨 redirect，從最終 URL 解析
+      const r2 = UrlFetchApp.fetch(url, { followRedirects: true, muteHttpExceptions: true })
+      const finalUrl = r2.getUrl()
       if (finalUrl && finalUrl !== url) {
         const r = parseGoogleMapsUrl(finalUrl)
         if (r) return r
       }
 
-      // 從 HTML 裡找 Google Maps place URL
-      const patterns = [
+      // 方法三：從 HTML 內容找 maps URL
+      const html = r2.getContentText()
+      const htmlPatterns = [
         /href="(https:\/\/www\.google\.com\/maps\/place\/[^"]+)"/,
         /content="(https:\/\/www\.google\.com\/maps\/place\/[^"]+)"/,
-        /"(https:\/\/www\.google\.com\/maps\/place\/[^"]+)"/
+        /"(https:\/\/www\.google\.com\/maps\/place\/[^"]+)"/,
+        /\\"(https:\\/\\/www\\.google\\.com\\/maps\\/place\\/[^\\"]+)\\"/
       ]
-      for (const pat of patterns) {
+      for (const pat of htmlPatterns) {
         const m = html.match(pat)
         if (m) {
-          const r = parseGoogleMapsUrl(m[1])
+          const candidate = m[1].replace(/\\u002F/g, '/').replace(/\\\//g, '/')
+          const r = parseGoogleMapsUrl(candidate)
           if (r) return r
         }
       }
