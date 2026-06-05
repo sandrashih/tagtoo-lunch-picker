@@ -134,6 +134,11 @@
     .random-modal-actions { display:flex; justify-content:center; gap:10px; margin-top:20px; }
     .random-modal-actions .btn-primary { text-decoration:none; padding:9px 20px; border-radius:8px; font-size:0.9rem; }
 
+    .map-skeleton { position:absolute; inset:0; z-index:10; border-radius:8px; overflow:hidden; background:#e8e8e8; display:flex; align-items:center; justify-content:center; min-height:420px; }
+    .map-skeleton-shimmer { position:absolute; inset:0; background:linear-gradient(90deg,#e8e8e8 25%,#f0f0f0 50%,#e8e8e8 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; }
+    .map-skeleton-label { position:relative; z-index:1; font-size:0.9rem; color:#999; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
     .site-footer { text-align:center; padding:16px; font-size:0.8rem; color:var(--muted); }
     .site-footer a { color:var(--muted); text-decoration:none; }
     .site-footer a:hover { color:var(--primary); }
@@ -462,11 +467,14 @@ function RestaurantMap({ t, lang, restaurants, winner, distFilter }){
   const mapRef=useRef(null)
   const instanceRef=useRef(null)
   const markersRef=useRef([])
+  const [mapReady,setMapReady]=useState(false)
 
   useEffect(()=>{
     if(instanceRef.current) return
     const map=L.map(mapRef.current).setView([OFFICE.lat,OFFICE.lng],16)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO',maxZoom:19}).addTo(map)
+    const tile=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO',maxZoom:19})
+    tile.on('load',()=>setMapReady(true))
+    tile.addTo(map)
     L.marker([OFFICE.lat,OFFICE.lng],{icon:L.divIcon({className:'',html:'<div class="office-marker">🏢</div>',iconSize:[32,32],iconAnchor:[16,16]})})
       .addTo(map).bindPopup(lang==='zh'?OFFICE.zh:OFFICE.en)
     instanceRef.current=map
@@ -505,7 +513,15 @@ function RestaurantMap({ t, lang, restaurants, winner, distFilter }){
   return (
     <div className="card" style={{flex:1}}>
       <div className="section-title">{t.mapTitle}</div>
-      <div ref={mapRef} id="map"></div>
+      <div style={{position:'relative'}}>
+        {!mapReady&&(
+          <div className="map-skeleton">
+            <div className="map-skeleton-shimmer"></div>
+            <div className="map-skeleton-label">🗺️ {lang==='zh'?'地圖載入中...':'Loading map...'}</div>
+          </div>
+        )}
+        <div ref={mapRef} id="map" style={{opacity:mapReady?1:0,transition:'opacity .4s'}}></div>
+      </div>
     </div>
   )
 }
