@@ -456,7 +456,7 @@ function RestaurantMap({ t, lang, restaurants, winner, distFilter }){
 
   useEffect(()=>{
     if(instanceRef.current) return
-    const map=L.map(mapRef.current).setView([OFFICE.lat,OFFICE.lng],15)
+    const map=L.map(mapRef.current).setView([OFFICE.lat,OFFICE.lng],17)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO',maxZoom:19}).addTo(map)
     L.marker([OFFICE.lat,OFFICE.lng],{icon:L.divIcon({className:'',html:'<div class="office-marker">🏢</div>',iconSize:[32,32],iconAnchor:[16,16]})})
       .addTo(map).bindPopup(lang==='zh'?OFFICE.zh:OFFICE.en)
