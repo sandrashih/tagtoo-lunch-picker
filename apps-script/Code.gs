@@ -112,11 +112,32 @@ function parseGoogleMapsUrl(url) {
     if (atMatch) { lat = parseFloat(atMatch[1]); lng = parseFloat(atMatch[2]) }
   }
 
-  // 短網址展開
+  // 短網址展開（maps.app.goo.gl 返回 HTML，需從內容抓真實 URL）
   if (!lat && (url.includes('goo.gl') || url.includes('maps.app'))) {
     try {
-      const expanded = UrlFetchApp.fetch(url, { followRedirects: true, muteHttpExceptions: true }).getUrl()
-      return parseGoogleMapsUrl(expanded)
+      const resp = UrlFetchApp.fetch(url, { followRedirects: true, muteHttpExceptions: true })
+      const finalUrl = resp.getUrl()
+      const html = resp.getContentText()
+
+      // 先試最終 URL
+      if (finalUrl && finalUrl !== url) {
+        const r = parseGoogleMapsUrl(finalUrl)
+        if (r) return r
+      }
+
+      // 從 HTML 裡找 Google Maps place URL
+      const patterns = [
+        /href="(https:\/\/www\.google\.com\/maps\/place\/[^"]+)"/,
+        /content="(https:\/\/www\.google\.com\/maps\/place\/[^"]+)"/,
+        /"(https:\/\/www\.google\.com\/maps\/place\/[^"]+)"/
+      ]
+      for (const pat of patterns) {
+        const m = html.match(pat)
+        if (m) {
+          const r = parseGoogleMapsUrl(m[1])
+          if (r) return r
+        }
+      }
     } catch(e) {}
   }
 
