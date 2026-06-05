@@ -136,7 +136,7 @@
 
     .map-skeleton { position:absolute; inset:0; z-index:10; border-radius:8px; overflow:hidden; background:#e8e8e8; display:flex; align-items:center; justify-content:center; min-height:420px; }
     .map-skeleton-shimmer { position:absolute; inset:0; background:linear-gradient(90deg,#e8e8e8 25%,#f0f0f0 50%,#e8e8e8 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; }
-    .map-skeleton-label { position:relative; z-index:1; font-size:0.9rem; color:#999; }
+    .map-skeleton-label { position:relative; z-index:1; font-size:0.9rem; color:#555; background:rgba(255,255,255,0.7); padding:6px 14px; border-radius:20px; }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
     .site-footer { text-align:center; padding:16px; font-size:0.8rem; color:var(--muted); }
@@ -474,6 +474,8 @@ function RestaurantMap({ t, lang, restaurants, winner, distFilter }){
     const map=L.map(mapRef.current).setView([OFFICE.lat,OFFICE.lng],16)
     const tile=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO',maxZoom:19})
     tile.on('load',()=>setMapReady(true))
+    map.on('tileload',()=>setMapReady(true))
+    setTimeout(()=>setMapReady(true), 4000) // 最多等 4 秒
     tile.addTo(map)
     L.marker([OFFICE.lat,OFFICE.lng],{icon:L.divIcon({className:'',html:'<div class="office-marker">🏢</div>',iconSize:[32,32],iconAnchor:[16,16]})})
       .addTo(map).bindPopup(lang==='zh'?OFFICE.zh:OFFICE.en)
